@@ -41,31 +41,33 @@ const pedidoController = {
 
             const dadosPedido = await pedidoModel.selecionaPedidoId(id_pedido);
 
-            const valorDistancia = dadosPedido.distancia * dadosPedido.valorKm;
-            const valorPeso = dadosPedido.peso * dadosPedido.valorKg;
+            let valorDistancia = dadosPedido[0].distancia * dadosPedido[0].valor_km;
+            let valorPeso = dadosPedido[0].peso_carga * dadosPedido[0].valor_kg;
+            
+            let valorBase = valorDistancia + valorPeso;
+            let valorFinal = 0;
+            let taxa = 15;
 
-            const valorBase = valorDistancia + valorPeso;
-            const valorFinal = Number;
-            const taxa = 15;
-
+            let acrescimo = 0;
+            let desconto = 0;
 
             if (dadosPedido.tipoEntrega === 'urgente') {
-                const acrescimo = valorBase * 0.2;
+                acrescimo = valorBase * 0.2;
                 valorFinal = valorBase + acrescimo;
             } else {
                 valorFinal = valorBase
             };
 
-            if (peso > 50.00) {
-                valorFinal + taxa;
+            if (dadosPedido.peso > 50.00) {
+                valorFinal += taxa;
             };
 
             if (valorFinal > 500.00) {
-                const desconto = valorFinal * 0.1;
+                desconto = valorFinal * 0.1;
                 valorFinal = valorFinal - desconto;
             }
 
-            const resultado = await pedidoModel.registrarPedido(id_pedido, valorDistancia, valorPeso, acrescimo, desconto, taxa, valorFinal, status);
+            const resultado = await pedidoModel.registrarEntrega(id_pedido, valorDistancia, valorPeso, acrescimo, desconto, taxa, valorFinal, status);
 
             return res.status(200).json({ message: 'Pedido finalizado!', data: resultado });
 
@@ -96,7 +98,7 @@ const pedidoController = {
             });
         }
 
-    }, 
+    },
 
     buscarTodasEntregas: async (req, res) => {
         try {
@@ -113,17 +115,17 @@ const pedidoController = {
                 errorMessage: error.message
             });
         }
-        
-    }, 
+
+    },
 
     alterarPedido: async (req, res) => {
         try {
             const idPedido = Number(req.params.idPedido);
-            let {distancia, pesoCarga, tipoEntrega, status} = req.body;
-        
+            let { distancia, pesoCarga, tipoEntrega, status } = req.body;
+
 
             if (!idPedido || !tipoEntrega || !distancia || !pesoCarga || typeof idPedido !== 'number' || isNaN(distancia) || isNaN(pesoCarga) || !status) {
-                return res.status(400).json({message: 'Verifique os dados enviados e tente again 🔁'});
+                return res.status(400).json({ message: 'Verifique os dados enviados e tente again 🔁' });
             }
 
             const pedidoAtual = await pedidoModel.selecionaPedidoId(idPedido);
@@ -153,7 +155,43 @@ const pedidoController = {
                 errorMessage: error.message
             });
         }
-        
+
+    },
+
+    editarCliente: async (req, res) => {
+        try {
+            const idCliente = Number(req.params.idCliente);
+            let { nomeCom, telefoneCli, emailCli, enderecoCom } = req.body
+
+            nomeCom = nomeCom.trim();
+
+            if (!idCliente || !nomeCom || !telefoneCli || !emailCli || !enderecoCom || !nomeCom.length < 3) {
+                return res.status(400).json({ message: 'Verifique os dados enviados e tente again 🔁' })
+            }
+            const clienteAtual = await clienteModel.selecionaPorId(idCliente);
+            if (clienteAtual.length === 0) {
+                throw new Error('Registro não localizado');
+            }
+            const novoNomeComp = nomeCom ?? clienteAtual[0].nomeCom;
+            const novoTelefoneCli = telefoneCli ?? clienteAtual[0].telefoneCli;
+            const novoEmailCli = emailCli ?? clienteAtual[0].emailCli;
+            const novoEnderecoCom = enderecoCom ?? clienteAtual[0].enderecoCom;
+
+            const resultado = await clienteModel.atualizarCliente(idCliente, novoNomeComp, novoTelefoneCli, novoEmailCli, novoEnderecoCom);
+
+            if (resultado.changeRows === 0) {
+                throw new error('Não foi possivel atualizar o cliente');
+            }
+            res.status(200).json({ message: 'Registro atualizado com sucesso', data: resultado })
+
+        } catch (error) {
+
+            console.error(error);
+            res.status(500).json({
+                message: 'Ocorreu um erro no servidor ok ?!?!?!?',
+                errorMessage: error.message
+            })
+        }
     }
 };
 

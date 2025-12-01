@@ -43,6 +43,13 @@ const clienteModel = {
         return rows;
         
      
+    },
+
+    atualizarCliente: async (pIdCliente, pNomeCompleto, pTelefone, pEmail, pEnderecoCompleto) => {
+       const sql = 'UPDATE clientes SET nome_completo=?, telefone=?, email=?, endereco_completo=? WHERE id_cliente=?;';
+        const values = [pNomeCompleto, pTelefone, pEmail, pEnderecoCompleto, pIdCliente];
+        const [rows] = await pool.query(sql, values);
+        return rows;
     }
 
 };

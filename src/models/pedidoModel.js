@@ -2,29 +2,22 @@ const pool = require('../config/db');
 
 const pedidoModel = {
 
-    registrarPedido: async (pIdCliente, pData, pTipoEntrega, pDistancia, pPeso, pValorKm, pValorKg, pStatus, pValorDistancia, pValorPeso, pAcrescimo, pDesconto, pTaxaExtra, pValorEntrega) => {
+    registrarPedido: async (pIdCliente, pData, pTipoEntrega, pDistancia, pPeso, pValorKm, pValorKg) => {
 
-        const connection = await pool.getConnection()
-
-        try {
-
-            await connection.beginTransaction();
             const sqlPedido = 'INSERT INTO pedidos (id_cliente_fk, data, tipo_entrega, distancia, peso_carga, valor_km, valor_kg) VALUES (?,?,?,?,?,?,?);';
             const valuesPedido = [pIdCliente, pData, pTipoEntrega, pDistancia, pPeso, pValorKm, pValorKg];
-            const [rowsPedido] = await connection.query(sqlPedido, valuesPedido);
-
-            const sqlEntrega = 'INSERT INTO entregas (id_pedido_fk, valor_distancia, valor_peso, acrescimo, desconto, taxa_extra, valor_entrega, status_entrega) VALUES (?,?,?,?,?,?,?,?);';
-            const valuesEntrega = [pIdPedido, pValorDistancia, pValorPeso, pAcrescimo, pDesconto, pTaxaExtra, pValorEntrega, pStatus];
-            const [rowsEntrega] = await connection.query(sqlEntrega, valuesEntrega);
-
-            await connection.commit();
-            return { rowsPedido, rowsEntrega };
-
-        } catch (error) {
-            await connection.rollback();
-            throw error;
-        }
+            const [rowsPedido] = await pool.query(sqlPedido, valuesPedido);
+            return rowsPedido;
     },
+
+    registrarEntrega: async (pIdPedido, pValorDistancia, pValorPeso, pAcrescimo, pDesconto, pTaxa, pValorFinal, pStatus) => {
+            const sqlEntrega = 'INSERT INTO entregas (id_pedido_fk, valor_distancia, valor_peso, acrescimo, desconto, taxa_extra, valor_entrega, status_entrega) VALUES (?,?,?,?,?,?,?,?);';
+            const valuesEntrega = [pIdPedido, pValorDistancia, pValorPeso, pAcrescimo, pDesconto, pTaxa, pValorFinal, pStatus];
+            const [rowsEntrega] = await pool.query(sqlEntrega, valuesEntrega);
+            return rowsEntrega;
+        
+    },
+           
 
     selecionaTodosPedidos: async () => {
         const sql = 'SELECT * FROM pedidos;';
@@ -70,6 +63,8 @@ const pedidoModel = {
         return rows;
         
     }
+
+    
 
 };
 

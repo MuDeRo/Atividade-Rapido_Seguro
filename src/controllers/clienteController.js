@@ -99,6 +99,42 @@ const clienteController = {
             });
         }
     },
+    
+    editarCliente: async (req, res) => {
+        try {
+            const idCliente = Number(req.params.idCliente);
+            let { nomeCom, telefoneCli, emailCli, enderecoCom } = req.body
+
+            nomeCom = nomeCom.trim();
+
+            if (!idCliente || !nomeCom || !telefoneCli || !emailCli || !enderecoCom || nomeCom.length<3) {
+                return res.status(400).json({ message: 'Verifique os dados enviados e tente again 🔁' })
+            }
+            const clienteAtual = await clienteModel.selecionaPorId(idCliente);
+            if (clienteAtual.length === 0) {
+                throw new Error('Registro não localizado');
+            }
+            const novoNomeComp = nomeCom ?? clienteAtual[0].nomeCom;
+            const novoTelefoneCli = telefoneCli ?? clienteAtual[0].telefoneCli;
+            const novoEmailCli = emailCli ?? clienteAtual[0].emailCli;
+            const novoEnderecoCom = enderecoCom ?? clienteAtual[0].enderecoCom;
+
+            const resultado = await clienteModel.atualizarCliente(idCliente, novoNomeComp, novoTelefoneCli, novoEmailCli, novoEnderecoCom);
+
+            if (resultado.changeRows === 0) {
+                throw new error('Não foi possivel atualizar o cliente');
+            }
+            res.status(200).json({ message: 'Registro atualizado com sucesso', data: resultado })
+
+        } catch (error) {
+
+            console.error(error);
+            res.status(500).json({
+                message: 'Ocorreu um erro no servidor ok ?!?!?!?',
+                errorMessage: error.message
+            })
+        }
+    }
 
 };
 
