@@ -27,6 +27,22 @@ const clienteModel = {
             const [rows] = await pool.query(sql);
             return rows;
 
+    },
+
+    selecionaPorId:async (pId) => {
+        const sql = 'SELECT * FROM clientes WHERE id_cliente=?;';
+        const values = [pId];
+        const [rows] = await pool.query(sql, values);
+        return rows;
+    },
+    
+    deletarCliente:async (pIdCliente) => {
+        const sql = 'DELETE FROM clientes WHERE id_cliente=?;'
+        const values = [pIdCliente];
+        const [rows] = await pool.query(sql, values);
+        return rows;
+        
+     
     }
 
 };

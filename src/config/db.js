@@ -2,7 +2,7 @@ const mysql = require('mysql2/promise');
 
 const pool = mysql.createPool({       //pool = conjunto de conexões (limite)
     
-    host: '10.87.169.38',
+    host: '10.87.169.36',
     user: 'demori',
     password: 'MySQL1234',
     database: 'rapido_seguro',
