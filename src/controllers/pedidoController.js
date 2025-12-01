@@ -1,6 +1,38 @@
 const { pedidoModel } = require('../models/pedidoModel');
 
 const pedidoController = {
+
+    /**
+ * Registra um novo pedido no banco de dados
+ * @async
+ * @function criarPedido
+ * @param {Request} req Objeto da requisição HTTP contendo os dados do pedido no corpo
+ * @param {Response} res Objeto da resposta HTTP
+ * @returns {Promise<object>} Retorna um objeto contendo propriedades que representam as informações do comando executado
+ * @example
+ * const pedido = await pedidoController.criarPedido({
+ *   body: {
+ *     id_cliente: 1,
+ *     data: '2025-12-01',
+ *     tipoEntrega: 'normal',
+ *     distancia: 12,
+ *     peso: 5,
+ *     valorKm: 2.5,
+ *     valorKg: 1.2
+ *   }
+ * }, res);
+ * // saída esperada
+ * "result": {
+ *   "fieldCount": 0,
+ *   "affectedRows": 1,
+ *   "insertId": 10,
+ *   "info": "",
+ *   "serverStatus": 2,
+ *   "warningStatus": 0,
+ *   "changedRows": 0
+ * }
+ */
+
     criarPedido: async (req, res) => {
         try {
 
@@ -28,6 +60,39 @@ const pedidoController = {
         }
     },
 
+
+    /**
+ * Cria ou atualiza uma entrega com cálculo de valor final baseado na distância, peso e tipo de entrega
+ * @async
+ * @function criarEntrega
+ * @param {Request} req Objeto da requisição HTTP contendo os dados da entrega no corpo
+ * @param {Response} res Objeto da resposta HTTP
+ * @returns {Promise<object>} Retorna um objeto contendo propriedades que representam as informações do comando executado e valores calculados
+ * @example
+ * const entrega = await pedidoController.criarEntrega({
+ *   body: {
+ *     id_pedido: 10,
+ *     status: 'em transito'
+ *   }
+ * }, res);
+ * // saída esperada
+ * "result": {
+ *   "fieldCount": 0,
+ *   "affectedRows": 1,
+ *   "insertId": 0,
+ *   "info": "",
+ *   "serverStatus": 2,
+ *   "warningStatus": 0,
+ *   "changedRows": 1,
+ *   "valorDistancia": 30,
+ *   "valorPeso": 6,
+ *   "acrescimo": 7.2,
+ *   "desconto": 0,
+ *   "taxa": 15,
+ *   "valorFinal": 58.2
+ * }
+ */
+
     criarEntrega: async (req, res) => {
         try {
 
@@ -43,7 +108,7 @@ const pedidoController = {
 
             let valorDistancia = dadosPedido[0].distancia * dadosPedido[0].valor_km;
             let valorPeso = dadosPedido[0].peso_carga * dadosPedido[0].valor_kg;
-            
+
             let valorBase = valorDistancia + valorPeso;
             let valorFinal = 0;
             let taxa = 15;
@@ -80,6 +145,44 @@ const pedidoController = {
         }
     },
 
+    /**
+ * Retorna todos os pedidos cadastrados no banco de dados
+ * @async
+ * @function buscarTodosPedidos
+ * @param {Request} req Objeto da requisição HTTP
+ * @param {Response} res Objeto da resposta HTTP
+ * @returns {Promise<object[]>} Retorna um array de objetos contendo os dados de todos os pedidos
+ * @example
+ * const pedidos = await pedidoController.buscarTodosPedidos(req, res);
+ * // saída esperada
+ * [
+ *   {
+ *     "id_pedido": 1,
+ *     "id_cliente": 1,
+ *     "data": "2025-12-01",
+ *     "tipoEntrega": "normal",
+ *     "distancia": 12,
+ *     "peso": 5,
+ *     "valorKm": 2.5,
+ *     "valorKg": 1.2,
+ *     "status": "calculado",
+ *     "valorFinal": 35
+ *   },
+ *   {
+ *     "id_pedido": 2,
+ *     "id_cliente": 2,
+ *     "data": "2025-12-02",
+ *     "tipoEntrega": "urgente",
+ *     "distancia": 20,
+ *     "peso": 10,
+ *     "valorKm": 2.5,
+ *     "valorKg": 1.2,
+ *     "status": "em transito",
+ *     "valorFinal": 66
+ *   }
+ * ]
+ */
+
     buscarTodosPedidos: async (req, res) => {
         try {
             const resultado = await pedidoModel.selecionaTodosPedidos();
@@ -100,6 +203,43 @@ const pedidoController = {
 
     },
 
+
+    /**
+ * Retorna todas as entregas registradas no banco de dados
+ * @async
+ * @function buscarTodasEntregas
+ * @param {Request} req Objeto da requisição HTTP
+ * @param {Response} res Objeto da resposta HTTP
+ * @returns {Promise<object[]>} Retorna um array de objetos contendo os dados de todas as entregas
+ * @example
+ * const entregas = await pedidoController.buscarTodasEntregas(req, res);
+ * // saída esperada
+ * [
+ *   {
+ *     "id_entrega": 1,
+ *     "id_pedido": 1,
+ *     "valorDistancia": 30,
+ * "valorPeso": 6,
+ * "acrescimo": 7.2,
+ * "desconto": 0,
+ * "taxa": 15,
+ * "valorFinal": 58.2,
+ * "status": "em transito"
+ *   },
+ *   {
+ *     "id_entrega": 2,
+ *     "id_pedido": 2,
+ *     "valorDistancia": 50,
+ * "valorPeso": 12,
+ * "acrescimo": 12.4,
+ * "desconto": 0,
+ * "taxa": 15,
+ * "valorFinal": 89.4,
+ * "status": "entregue"
+ *   }
+ * ]
+ */
+
     buscarTodasEntregas: async (req, res) => {
         try {
             const resultado = await pedidoModel.selecionaTodasEntregas();
@@ -117,6 +257,35 @@ const pedidoController = {
         }
 
     },
+
+    /**
+ * Atualiza os dados de um pedido existente no banco de dados
+ * @async
+ * @function alterarPedido
+ * @param {Request} req Objeto da requisição HTTP, contendo o id do pedido nos parâmetros e os novos dados no corpo
+ * @param {Response} res Objeto da resposta HTTP
+ * @returns {Promise<object>} Retorna um objeto contendo informações sobre a atualização do pedido
+ * @example
+ * const resultado = await pedidoController.alterarPedido({
+ *   params: { idPedido: 10 },
+ *   body: {
+ *     distancia: 15,
+ *     pesoCarga: 7,
+ *     tipoEntrega: 'urgente',
+ *     status: 'em transito'
+ *   }
+ * }, res);
+ * // saída esperada
+ * "result": {
+ *   "fieldCount": 0,
+ *   "affectedRows": 1,
+ *   "insertId": 0,
+ *   "info": "",
+ *   "serverStatus": 2,
+ *   "warningStatus": 0,
+ *   "changedRows": 1
+ * }
+ */
 
     alterarPedido: async (req, res) => {
         try {
@@ -157,6 +326,36 @@ const pedidoController = {
         }
 
     },
+
+
+    /**
+ * Atualiza os dados de um cliente existente no banco de dados
+ * @async
+ * @function editarCliente
+ * @param {Request} req Objeto da requisição HTTP, contendo o id do cliente nos parâmetros e os novos dados no corpo
+ * @param {Response} res Objeto da resposta HTTP
+ * @returns {Promise<object>} Retorna um objeto contendo informações sobre a atualização do cliente
+ * @example
+ * const resultado = await clienteController.editarCliente({
+ *   params: { idCliente: 5 },
+ *   body: {
+ *     nomeCom: 'Maycon Espricio',
+ *     telefoneCli: '11987654321',
+ *     emailCli: 'exemplo@email.com',
+ *     enderecoCom: 'Rua Exemplo, 123'
+ *   }
+ * }, res);
+ * // saída esperada
+ * "result": {
+ *   "fieldCount": 0,
+ *   "affectedRows": 1,
+ *   "insertId": 0,
+ *   "info": "",
+ *   "serverStatus": 2,
+ *   "warningStatus": 0,
+ *   "changedRows": 1
+ * }
+ */
 
     editarCliente: async (req, res) => {
         try {
